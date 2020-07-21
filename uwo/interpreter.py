@@ -2,6 +2,7 @@ from .token import *
 from .parser import *
 from .errors import *
 
+
 class Number:
     def __init__(self, value):
         self.value = value
@@ -50,23 +51,24 @@ class Interpreter:
 
     def visit_ReferenceNode(self, node):
         ref = self.variables.get(node.name)
-        if ref:
-            print(f"Creating vaw {node.var} with reference to {node.name}")
-            self.current_var = ref
-            self.variables[node.var] = self.current_var
+        #if ref:
+        print(f"Creating vaw {node.var} with reference to {node.name}")
+        self.current_var = ref
+        self.variables[node.var] = self.current_var
 
-            return ref[1]
-        else:
-            return UndefinedReferenceError(node.pos_start, node.pos_end, node.name)
+        return ref[1]
+        #else:
+            # return UndefinedReferenceError(node.pos_start, node.pos_end, node.name)
 
     def visit_VariableNode(self, node):
         if(isinstance(node.value, BinOpNode)):
             value = self.visit(node.value)
             print(f"creating vaw {node.name} with value: {value}")
             self.current_var = [node, value]
-            self.variables = self.variables.setdefault(node.name, self.current_var)
+            self.variables = self.variables.setdefault(
+                node.name, self.current_var)
             return value
-            
+
     def visit_NumberNode(self, node):
         return Number(node.tok.value).set_pos(node.pos_start, node.pos_end)
 
