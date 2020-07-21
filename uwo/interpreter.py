@@ -1,6 +1,6 @@
 from .token import *
 from .parser import *
-
+from .errors import *
 
 class Number:
     def __init__(self, value):
@@ -49,20 +49,22 @@ class Interpreter:
             raise Exception(f'No visit_{type(node).__name__} method defined')
 
     def visit_ReferenceNode(self, node):
-        print(f"Creating vaw {node.var} with reference to {node.name}")
+        ref = self.variables.get(node.name)
+        if ref:
+            print(f"Creating vaw {node.var} with reference to {node.name}")
+            self.current_var = ref
+            self.variables[node.var] = self.current_var
 
-        ref = self.variables[node.name]
-        self.current_var = ref
-        self.variables[node.var] = self.current_var
-
-        return ref[1]
+            return ref[1]
+        else:
+            return UndefinedReferenceError(node.pos_start, node.pos_end, node.name)
 
     def visit_VariableNode(self, node):
         if(isinstance(node.value, BinOpNode)):
             value = self.visit(node.value)
             print(f"creating vaw {node.name} with value: {value}")
             self.current_var = [node, value]
-            self.variables[node.name] = self.current_var
+            self.variables = self.variables.setdefault(node.name, self.current_var)
             return value
             
     def visit_NumberNode(self, node):

@@ -95,6 +95,7 @@ class Parser:
     def __init__(self, tokens):
         self.tokens = tokens
         self.tok_idx = -1
+        self.curr_name = None
         self.advance()
 
     def advance(self):
@@ -111,7 +112,7 @@ class Parser:
                 "Expected " + formatPossibleValues()
             ))
 
-        return res
+        return self.ref(res)
 
     ###################################
 
@@ -152,27 +153,28 @@ class Parser:
     def term(self):
         return self.bin_op(self.factor, (TT_MUL, TT_DIV))
 
+    def ref(self, res):
+        if self.current_tok.type == TT_REF:       
+            og = self.current_tok    
+            res.register(self.advance())
+            self.advance()  
+            ref_node = ReferenceNode(og.value, self.curr_name, og.pos_start, og.pos_end)
+            return res.success(ref_node)
+        return res
     def var(self, res):
-        tok = self.current_tok
-
-        if tok.type == TT_VAR:
-            name = tok.value.replace("vaw ", "")
+        if self.current_tok.type == TT_VAR:
+            self.curr_name = self.current_tok.value.replace("vaw ", "")
             res.register(self.advance())
             self.advance()
             
             value = res.register(self.expr())
             if isinstance(value, NumberNode):
                 value = value.node
-            
-            if self.current_tok.type == TT_REF:
-                ref_node = ReferenceNode(self.current_tok.value, name, tok.pos_start, tok.pos_end)
-                res = res.success(ref_node)
 
-
-            left = VariableNode(name, value, tok.pos_start, tok.pos_end)
+            left = VariableNode(self.curr_name, value, self.current_tok.pos_start, self.current_tok.pos_end)
 
             return res.success(left)
-        
+
         return res
 
     def expr(self):
